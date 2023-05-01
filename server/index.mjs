@@ -1,26 +1,33 @@
-import http from 'http'
+import express from "express";
+import bp from "body-parser";
+import morgan from "morgan";
 
-const host = 'localhost'
-const port = 8000
+const app = express();
 
-const server = http.createServer((req, res) => {
-    if (req.method === 'POST') {
-        let body = ''
-        req.on('data', chunk => {
-            body += chunk
-        })
+app.use(bp.urlencoded({ extended: true }));
+app.use(bp.json());
+app.use(morgan("dev"));
 
-        req.on('close', () => {
-            console.log(JSON.parse(body))
-        })
-        res.writeHead(201)
-        res.end('ok')
-    } else {
-        res.writeHead(200)
-        res.end('hi')
-    }
-})
+const db = [];
 
-server.listen(port, host, () => {
-    console.log(`Server running at http://${host}:${port}`)
-})
+app.post("/todo", (req, res) => {
+  const newTodo = {
+    id: Date.now(),
+    text: req.body.text,
+  };
+  db.push(newTodo);
+  res.json(newTodo);
+});
+
+app.get("/todo", (req, res) => {
+  res.json(db);
+});
+
+app.get("/todo/:id", (req, res) => {
+  const todo = db.find((todo) => todo.id === Number(req.params.id));
+  res.json({data: todo});
+});
+
+app.listen(process.env.PORT, () => {
+  console.log("Server running at port ", process.env.PORT);
+});
